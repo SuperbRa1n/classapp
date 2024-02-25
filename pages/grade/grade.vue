@@ -26,8 +26,9 @@
 				<text class="grade-xf">{{item.xf}}学分</text>
 				<text class="grade-jd">{{item.jd}}/{{item.bfzcj}}</text>
 				<!-- 根据绩点大小绘制进度条 -->
-				<view class="progress" style="position: absolute; left: 5%; top: 60rpx; width: 80%; height: 10rpx; background-color: #f0f0f0;">
-					<view class="progress-inner" style="position: absolute; left: 0; top: 0; width: {{item.jd / 5 * 80}}%; height: 10rpx; background-color: #4a90e2;"></view>
+				<view class="progress" style="position: absolute; left: 5%; top: 60rpx; width: 90%; height: 10rpx; background-color: #f0f0f0;">
+					<view class="progress-now" :style="'width:' + (item.jd * 20) + '%; height: 10rpx; background-color: #4a90e2; position: absolute; top: 0; left: 0;'"></view>
+        </view>
 			</view>
 		</scroll-view>
 	</view>
@@ -81,11 +82,13 @@
 
 <style>
 	.top-info {
+    top: 0rpx;
 		background-color: #4a90e2;
-		padding-top: 20rpx;
-		height: 100rpx;
-		position: absolute;
+		height: 120rpx;
+    white-space: nowrap;
+    position: sticky;
 		width: 100%;
+    z-index: 100;
 	}
 	
 	.info-text {
@@ -106,10 +109,11 @@
 	.top-info-2 {
 		top: 120rpx;
 		background-color: #ffffff;
-		padding-top: 20rpx;
-		height: 100rpx;
-		position: absolute;
+		height: 120rpx;
+    white-space: nowrap;
+    position: sticky;
 		width: 100%;
+    z-index: 100;
 	}
 	
 	.info-text-2 {
@@ -128,8 +132,10 @@
 	}
 	
 	.grade {
-		margin-top: 260rpx;
-		position: absolute;
+    top: 0rpx;
+    position: sticky;
+    white-space: nowrap;
+    height: 100%;
 		width: 90%;
 		left: 5%;
 	}

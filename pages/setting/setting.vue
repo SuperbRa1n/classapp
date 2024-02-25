@@ -53,7 +53,9 @@
 				gradeData: {},
 				xm: '',
 				value: '',
-				
+				url: 'http://124.220.13.16:5000',
+        JSESSIONID: '',
+
 			}
 		},
 		onLoad() {
@@ -70,17 +72,38 @@
 		methods: {
 			userLogin() {
 				this.isLoading = true;
-				this.getInfo();
-				uni.setStorageSync('username', this.username);
-				uni.setStorageSync('password', this.password);
+        uni.request({
+          url: this.url + '/login',
+          method: 'POST',
+          data: {
+            "username": this.username,
+            "password": this.password
+          },
+          header: {
+            'content-type': 'application/x-www-form-urlencoded'
+          },
+          success: (res) => {
+            console.log(res.data.JSESSIONID);
+            this.isLoading = false;
+            this.isLogin = false;
+            this.JSESSIONID = res.data.JSESSIONID;
+            uni.setStorageSync('username', this.username);
+            uni.setStorageSync('password', this.password);
+            uni.setStorageSync('JSESSIONID', res.data.JSESSIONID);
+            this.getInfo();
+          },
+          fail: (err) => {
+            console.log(err);
+            this.isLoading = false;
+          }
+        });
 			},
 			getInfo() {
 				uni.request({
-					url: 'http://192.168.31.211:5000/class',
+					url: this.url + '/class',
 					method: 'POST',
 					data: {
-						"username": this.username,
-						"password": this.password
+						"JSESSIONID": this.JSESSIONID
 					},
 					header: {
 						'content-type': 'application/x-www-form-urlencoded'
@@ -98,11 +121,10 @@
 					}
 				});
 				uni.request({
-					url: 'http://192.168.31.211:5000/grade',
+					url: this.url + '/grade',
 					method: "POST",
 					data: {
-						"username": this.username,
-						"password": this.password
+            "JSESSIONID": this.JSESSIONID
 					},
 					header: {
 						'content-type': 'application/x-www-form-urlencoded'
@@ -131,6 +153,9 @@
 			changeUser() {
 				uni.removeStorageSync('username');
 				uni.removeStorageSync('password');
+        uni.removeStorageSync('classData');
+        uni.removeStorageSync('gradeData');
+        uni.removeStorageSync('JSESSIONID');
 				uni.removeStorageSync('xm');
 				this.username = '';
 				this.password = '';
