@@ -20,35 +20,43 @@
 				gradeData: uni.getStorageSync('gradeData'),
 			}
 		},
+    onLoad() {
+      this.classData = uni.getStorageSync('classData');
+      this.gradeData = uni.getStorageSync('gradeData');
+      console.log(this.gradeData);
+    },
 		methods: {
-			getTotalScore() {
-				var totalScore = 0;
-				var items = this.gradeData.items;
-				for (var i = 0; i < items.length; i++) {
-					totalScore += parseFloat(items[i].xf);
-				}
-				return totalScore;
-			},
-			getAverageGrade() {
-				var totalScore = 0;
-				var totalGrade = 0;
-				var items = this.gradeData.items;
-				for (var i = 0; i < items.length; i++) {
-					totalScore += parseFloat(items[i].xf);
-					totalGrade += parseFloat(items[i].jd) * parseFloat(items[i].xf);
-				}
-				return (totalGrade / totalScore).toFixed(2);
-			},
-			getAverageBFZ() {
-				var totalScore = 0;
-				var totalGrade = 0;
-				var items = this.gradeData.items;
-				for (var i = 0; i < items.length; i++) {
-					totalScore += parseFloat(items[i].xf);
-					totalGrade += parseFloat(items[i].bfzcj) * parseFloat(items[i].xf);
-				}
-				return (totalGrade / totalScore).toFixed(2);
-			},
+      getTotalScore() {
+        var totalScore = 0;
+        for (var i = 0; i < this.gradeData.length; i++) {
+          for (var j = 0; j < this.gradeData[i].items.length; j++) {
+            totalScore += parseFloat(this.gradeData[i].items[j].xf);
+          }
+        }
+        return totalScore;
+      },
+      getAverageGrade() {
+        var totalScore = 0;
+        var totalGrade = 0;
+        for (var i = 0; i < this.gradeData.length; i++) {
+          for (var j = 0; j < this.gradeData[i].items.length; j++) {
+            totalScore += parseFloat(this.gradeData[i].items[j].xf);
+            totalGrade += parseFloat(this.gradeData[i].items[j].jd) * parseFloat(this.gradeData[i].items[j].xf);
+          }
+        }
+        return (totalGrade / totalScore).toFixed(2);
+      },
+      getAverageBFZ() {
+        var totalScore = 0;
+        var totalGrade = 0;
+        for (var i = 0; i < this.gradeData.length; i++) {
+          for (var j = 0; j < this.gradeData[i].items.length; j++) {
+            totalScore += parseFloat(this.gradeData[i].items[j].xf);
+            totalGrade += parseFloat(this.gradeData[i].items[j].bfzcj) * parseFloat(this.gradeData[i].items[j].xf);
+          }
+        }
+        return (totalGrade / totalScore).toFixed(2);
+      },
 			goGrade() {
 				uni.navigateTo({
 					url: '/pages/grade/grade'

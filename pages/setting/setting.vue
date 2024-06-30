@@ -15,7 +15,7 @@
 		</view>
 		<view class="refresh" style="margin-top: 20rpx">
 			<text style="margin-left: 20rpx;">刷新设置</text>
-			<view class="refresh-now" @click="getInfo">
+			<view class="refresh-now" @click="userLogin">
 				<image src="../../static/refresh.png" style="margin-left: 20rpx; width: 30rpx; height: 30rpx;"></image>
 				<text style="margin-left: 10rpx;">立即刷新数据</text>
 			</view>
@@ -49,8 +49,8 @@
 				isLoading: false,
 				username: '',
 				password: '',
-				classData: {},
-				gradeData: {},
+				classData: [],
+				gradeData: [],
 				xm: '',
 				value: '',
 				url: 'http://124.220.13.16:5000',
@@ -64,7 +64,7 @@
 			this.xm = uni.getStorageSync('xm');
 			if (this.username != '') {
 				this.isLogin = false;
-				this.getInfo();
+				this.userLogin();
 			} else {
 				this.isLogin = true;
 			}
@@ -83,14 +83,21 @@
             'content-type': 'application/x-www-form-urlencoded'
           },
           success: (res) => {
-            console.log(res.data.JSESSIONID);
             this.isLoading = false;
             this.isLogin = false;
             this.JSESSIONID = res.data.JSESSIONID;
             uni.setStorageSync('username', this.username);
             uni.setStorageSync('password', this.password);
             uni.setStorageSync('JSESSIONID', res.data.JSESSIONID);
-            this.getInfo();
+            this.classData = [];
+            this.gradeData = [];
+            var xnmList = ['2030', '2029', '2028', '2027', '2026', '2025', '2024', '2023', '2022', '2021', '2019', '2018'];
+            var xqmList = ['3', '12'];
+            for (var i = 0; i < xnmList.length; i++) {
+              for (var j = 0; j < xqmList.length; j++) {
+                this.getInfo(xnmList[i], xqmList[j]);
+              }
+            }
           },
           fail: (err) => {
             console.log(err);
@@ -98,12 +105,14 @@
           }
         });
 			},
-			getInfo() {
+			getInfo(xnm, xqm) {
 				uni.request({
 					url: this.url + '/class',
 					method: 'POST',
 					data: {
-						"JSESSIONID": this.JSESSIONID
+						"JSESSIONID": this.JSESSIONID,
+            "xnm": xnm,
+            "xqm": xqm
 					},
 					header: {
 						'content-type': 'application/x-www-form-urlencoded'
@@ -111,9 +120,12 @@
 					success: (res) => {
 						this.isLoading = false;
 						this.isLogin = false;
-						console.log(res.data);
-						this.classData = res.data;
-						uni.setStorageSync('classData', this.classData);
+						if (res.data.kbList.length != 0) {
+              this.classData.push(res.data);
+              uni.setStorageSync('classData', this.classData);
+              console.log(this.classData);
+            }
+
 					},
 					fail: (err) => {
 						console.log(err);
@@ -124,7 +136,9 @@
 					url: this.url + '/grade',
 					method: "POST",
 					data: {
-            "JSESSIONID": this.JSESSIONID
+            "JSESSIONID": this.JSESSIONID,
+            "xnm": xnm,
+            "xqm": xqm
 					},
 					header: {
 						'content-type': 'application/x-www-form-urlencoded'
@@ -132,11 +146,13 @@
 					success: (res) => {
 						this.isLoading = false;
 						this.isLogin = false;
-						console.log(res.data);
-						this.gradeData = res.data;
-						this.xm = res.data.items[0].xm;
-						uni.setStorageSync('xm', this.xm);
-						uni.setStorageSync('gradeData', this.gradeData);
+						if (res.data.items.length != 0) {
+              this.gradeData.push(res.data);
+              this.xm = res.data.items[0].xm;
+              uni.setStorageSync('xm', this.xm);
+              uni.setStorageSync('gradeData', this.gradeData);
+              console.log(this.gradeData);
+            }
 					},
 					fail: (err) => {
 						console.log(err);

@@ -47,8 +47,15 @@
 				"navigationBarTitleText" : "成绩",
 				"enablePullDownRefresh" : false
 			}
+		},
+      	{
+			  "path": "pages/table/table",
+			  "style": {
+				"navigationBarTitleText": "课表",
+				"enablePullDownRefresh": true
+			  }
 		}
-	],
+    ],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "fjsmu_info",
