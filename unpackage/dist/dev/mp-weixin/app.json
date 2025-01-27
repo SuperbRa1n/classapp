@@ -1,0 +1,50 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/date/date",
+    "pages/tool/tool",
+    "pages/setting/setting",
+    "pages/about/about",
+    "pages/tiaokuan/tiaokuan",
+    "pages/grade/grade",
+    "pages/table/table"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "fjsmu_info",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#000000",
+    "selectedColor": "#4a90e2",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/home-two_s.png",
+        "selectedIconPath": "static/home-two.png"
+      },
+      {
+        "pagePath": "pages/date/date",
+        "text": "日程",
+        "iconPath": "static/schedule.png",
+        "selectedIconPath": "static/schedule_s.png"
+      },
+      {
+        "pagePath": "pages/tool/tool",
+        "text": "工具",
+        "iconPath": "static/tool.png",
+        "selectedIconPath": "static/tool_s.png"
+      },
+      {
+        "pagePath": "pages/setting/setting",
+        "text": "设置",
+        "iconPath": "static/setting.png",
+        "selectedIconPath": "static/setting_s.png"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

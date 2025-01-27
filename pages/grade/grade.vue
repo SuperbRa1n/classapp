@@ -1,301 +1,295 @@
 <template>
-  <view class="page-wraper">
-    <view class="header">
-      <view class="top-info">
-        <text class="info-text" style="left: 5%;">总学分</text>
-        <text class="info-value" style="left: 5%;">{{getTotalScore()}}</text>
-        <text class="info-text" style="left: 28%;">总均绩</text>
-        <text class="info-value" style="left: 28%;">{{getAverageGrade()}}</text>
-        <text class="info-text" style="left: 51%;">学分绩</text>
-        <text class="info-value" style="left: 51%;">{{(getTotalScore() * getAverageGrade()).toFixed(2)}}</text>
-        <text class="info-text" style="left: 74%;">百分制</text>
-        <text class="info-value" style="left: 74%;">{{getAverageBFZ()}}</text>
-      </view>
-      <view class="top-info-2">
-        <text class="info-text-2" style="left: 5%;">学期学分</text>
-        <text class="info-value-2" style="left: 5%;">{{getXueqiScore()}}</text>
-        <text class="info-text-2" style="left: 28%;">学期均绩</text>
-        <text class="info-value-2" style="left: 28%;">{{getXueqiAverageGrade()}}</text>
-        <text class="info-text-2" style="left: 51%;">学年学分</text>
-        <text class="info-value-2" style="left: 51%;">{{getXuenianScore()}}</text>
-        <text class="info-text-2" style="left: 74%;">学年均绩</text>
-        <text class="info-value-2" style="left: 74%;">{{getXuenianGrade()}}</text>
+  <view class="container">
+    <!-- Header Section -->
+    <view class="grade-summary">
+      <view
+        v-for="(item, index) in gradeSummary"
+        :key="index"
+        class="grade-item"
+        :style="{ backgroundColor: item.color }"
+      >
+        <text class="grade-label">{{ item.label }}</text>
+        <text class="grade-value">{{ item.value }}</text>
       </view>
     </view>
-    <view class="grade">
-      <scroll-view class="scroll" :scroll-y="true" style="height: 100%;" :scroll-with-animation="true">
-        <view class="grade-info" v-for="(item, index) in gradeData[getCurIndex()].items">
-          <text class="grade-text">{{item.kcmc}}</text>
-          <text class="grade-xf">{{item.xf}}学分</text>
-          <text class="grade-jd">{{item.jd}}/{{item.bfzcj}}</text>
-          <!-- 根据绩点大小绘制进度条 -->
-          <view class="progress" style="position: absolute; left: 5%; top: 60rpx; width: 90%; height: 10rpx; background-color: #f0f0f0;">
-            <view class="progress-now" :style="'width:' + (item.jd * 20) + '%; height: 10rpx; background-color: #4a90e2; position: absolute; top: 0; left: 0;'"></view>
-          </view>
+
+    <!-- Term Switcher -->
+    <scroll-view scroll-x class="term-summary">
+      <view
+        v-for="(term, index) in termSwitcher"
+        :key="index"
+        :class="['term-item', { 'selected-term-item': term === selectedTerm }]"
+        @tap="selectTerm(term)"
+      >
+        <text class="term-label">{{ term }}</text>
+        <text class="term-value">
+          {{ calculateXueqiGPA(term).toFixed(2) }}/{{ calculateXueqiCredit(term).toFixed(2) }}
+        </text>
+      </view>
+    </scroll-view>
+
+    <!-- Course List -->
+    <scroll-view scroll-y class="course-list">
+      <view
+        v-for="(course, index) in getCoursesByTerm(selectedTerm)"
+        :key="index"
+        class="course-item"
+        @tap="navigateToDetail(course.kcmc)"
+      >
+        <view class="course-header">
+          <text class="course-name">{{ course.kcmc }}</text>
+          <text class="course-score">{{ course.bfzcj }} / {{ course.jd }}</text>
         </view>
-      </scroll-view>
-    </view>
-    <view class="footer">
-      <scroll-view class="xueqi" :scroll-x="true" style="width: 100%;">
-        <view style="display: flex; flex-direction: row;">
-          <view class="xueqi-item" v-for="(item, index) in xueqiList" @click="changeXueqi(index)" :style="'background-color:' + (item == curXueqi ? '#ffffff' : '#4a90e2') + '; color:' + (item == curXueqi ? '#4a90e2' : '#ffffff')">
-            <text>{{item}}</text>
-          </view>
+        <text class="course-info">
+          {{ course.jxbmc }} / {{ course.xf }} 学分
+        </text>
+        <view class="progress-bar-container">
+          <view
+            class="progress-bar"
+            :style="{ width: course.bfzcj + '%' }"
+          ></view>
         </view>
-      </scroll-view>
-    </view>
+      </view>
+    </scroll-view>
   </view>
 </template>
 
 <script>
-	export default {
-		data() {
-			return {
-				classData: uni.getStorageSync('classData'),
-				gradeData: uni.getStorageSync('gradeData'),
-        xueqiGrade: [],
-        curXueqi: '2023-2024-1',
-        xueqi: [],
-        xueqiList: [],
-			}
-		},
-    onLoad() {
-      // 加载成绩数据
-      this.gradeData = uni.getStorageSync('gradeData');
-      // 按照百分制成绩进行排序
-      for (var i=0; i < this.gradeData.length; i++) {
-        this.gradeData[i].items.sort((a, b) => {
-          return parseFloat(b.bfzcj) - parseFloat(a.bfzcj);
-        });
-      }
-      this.getXueqiList();
+export default {
+  data() {
+    return {
+      classInfo: [],
+      gradeInfo: [],
+      selectedTerm: '',
+      termSwitcher: [],
+      totalCredit: 0,
+      totalGrade: 0,
+      yearCredit: 0,
+      yearGrade: 0,
+      xueqiCredit: 0,
+      xueqiGrade: 0,
+      totalBaiFenZhi: 0,
+      xueqiBaiFenZhi: 0,
+      isTermSet: false,
+    };
+  },
+  computed: {
+    gradeSummary() {
+      return [
+        {
+          label: '总均绩',
+          value: this.totalGrade.toFixed(2),
+          color: '#E3F2FD',
+        },
+        {
+          label: '获得学分',
+          value: this.totalCredit.toFixed(2),
+          color: '#FFF3E0',
+        },
+        {
+          label: '学年均绩',
+          value: this.yearGrade.toFixed(2),
+          color: '#E8F5E9',
+        },
+        {
+          label: '学年学分',
+          value: this.yearCredit.toFixed(2),
+          color: '#F3E5F5',
+        },
+        {
+          label: '学期均绩',
+          value: this.xueqiGrade.toFixed(2),
+          color: '#FFFDE7',
+        },
+        {
+          label: '学期学分',
+          value: this.xueqiCredit.toFixed(2),
+          color: '#E1F5FE',
+        },
+        {
+          label: '总百分制',
+          value: this.totalBaiFenZhi.toFixed(2),
+          color: '#FFEBEE',
+        },
+        {
+          label: '学期百分制',
+          value: this.xueqiBaiFenZhi.toFixed(2),
+          color: '#E0F7FA',
+        },
+      ];
     },
-		methods: {
-			getTotalScore() {
-				var totalScore = 0;
-        for (var i = 0; i < this.gradeData.length; i++) {
-          for (var j = 0; j < this.gradeData[i].items.length; j++) {
-            totalScore += parseFloat(this.gradeData[i].items[j].xf);
-          }
+  },
+  onLoad() {
+    this.initializeData();
+  },
+  methods: {
+    async initializeData() {
+      try {
+        const classInfo = uni.getStorageSync('classInfo');
+        const gradeInfo = uni.getStorageSync('gradeInfo');
+        this.classInfo = classInfo ? JSON.parse(classInfo) : [];
+        this.gradeInfo = gradeInfo ? JSON.parse(gradeInfo) : [];
+        this.generateTermSwitcher();
+        if (!this.isTermSet) {
+          this.selectedTerm = this.termSwitcher[0];
+          this.isTermSet = true;
+          this.updateGrades();
         }
-				return totalScore;
-			},
-			getAverageGrade() {
-				var totalScore = 0;
-				var totalGrade = 0;
-        for (var i = 0; i < this.gradeData.length; i++) {
-          for (var j = 0; j < this.gradeData[i].items.length; j++) {
-            totalScore += parseFloat(this.gradeData[i].items[j].xf);
-            totalGrade += parseFloat(this.gradeData[i].items[j].jd) * parseFloat(this.gradeData[i].items[j].xf);
-          }
+      } catch (error) {
+        console.error('Error initializing data:', error);
+      }
+    },
+    generateTermSwitcher() {
+      const termSet = new Set();
+      this.classInfo.forEach((item) => {
+        if (item.kbList.length > 0) {
+          const xnm = item.xsxx.XNMC;
+          const xqm = item.xsxx.XQM === '3' ? '秋冬' : '春夏';
+          const term = `${xnm}${xqm}`;
+          termSet.add(term);
         }
-				return (totalGrade / totalScore).toFixed(2);
-			},
-			getAverageBFZ() {
-				var totalScore = 0;
-				var totalGrade = 0;
-        for (var i = 0; i < this.gradeData.length; i++) {
-          for (var j = 0; j < this.gradeData[i].items.length; j++) {
-            totalScore += parseFloat(this.gradeData[i].items[j].xf);
-            totalGrade += parseFloat(this.gradeData[i].items[j].bfzcj) * parseFloat(this.gradeData[i].items[j].xf);
-          }
-        }
-				return (totalGrade / totalScore).toFixed(2);
-			},
-			goGrade() {
-				uni.navigateTo({
-					url: '/pages/grade/grade'
-				});
-			},
-      getXueqiScore() {
-        var totalScore = 0;
-        var items = this.gradeData[this.getCurIndex()].items;
-        for (var i = 0; i < items.length; i++) {
-          totalScore += parseFloat(items[i].xf);
-        }
-        return totalScore;
-      },
-      getXueqiAverageGrade() {
-        var totalScore = 0;
-        var totalGrade = 0;
-        var items = this.gradeData[this.getCurIndex()].items;
-        for (var i = 0; i < items.length; i++) {
-          totalScore += parseFloat(items[i].xf);
-          totalGrade += parseFloat(items[i].jd) * parseFloat(items[i].xf);
-        }
-        return (totalGrade / totalScore).toFixed(2);
-      },
-      getXuenianScore() {
-        var totalScore = 0;
-        for (var i = 0; i < this.gradeData.length; i++) {
-          for (var j = 0; j < this.gradeData[i].items.length; j++) {
-            if (this.gradeData[i].items[j].xnmmc == this.gradeData[this.getCurIndex()].items[0].xnmmc) {
-              totalScore += parseFloat(this.gradeData[i].items[j].xf);
+      });
+      this.termSwitcher = Array.from(termSet).sort((a, b) => {
+        if (a.substring(0, 9) < b.substring(0, 9)) return 1;
+        if (a.substring(0, 9) > b.substring(0, 9)) return -1;
+        return a.substring(9, 11) === '秋冬' ? 1 : -1;
+      });
+    },
+    selectTerm(term) {
+      this.selectedTerm = term;
+      this.updateGrades();
+    },
+    updateGrades() {
+      const totalItems = [];
+      const yearItems = [];
+      const xueqiItems = [];
+      this.gradeInfo.forEach((item) => {
+        const items = item.items || [];
+        items.forEach((course) => {
+          totalItems.push(course);
+          if (course.xnmmc === this.selectedTerm.substring(0, 9)) {
+            yearItems.push(course);
+            if (
+              (course.xqmmc === '1' &&
+                this.selectedTerm.substring(9, 11) === '秋冬') ||
+              (course.xqmmc === '2' &&
+                this.selectedTerm.substring(9, 11) === '春夏')
+            ) {
+              xueqiItems.push(course);
             }
           }
-        }
-        return totalScore;
-      },
-      getXuenianGrade() {
-        var totalScore = 0;
-        var totalGrade = 0;
-        for (var i = 0; i < this.gradeData.length; i++) {
-          for (var j = 0; j < this.gradeData[i].items.length; j++) {
-            if (this.gradeData[i].items[j].xnmmc == this.gradeData[this.getCurIndex()].items[0].xnmmc) {
-              totalScore += parseFloat(this.gradeData[i].items[j].xf);
-              totalGrade += parseFloat(this.gradeData[i].items[j].jd) * parseFloat(this.gradeData[i].items[j].xf);
-            }
-          }
-        }
-        return (totalGrade / totalScore).toFixed(2);
-      },
-      getCurXueqi() {
-        var date = this.gradeData[0].items[0].dateDigitSeparator;
-        var year = date.split('-')[0];
-        var month = date.split('-')[1];
-        if (parseInt(month) < 9) {
-          return (year - 1).toString() + '-' + year + '-2';
-        } else {
-          return year + '-' + (parseInt(year) + 1).toString() + '-1';
-        }
-      },
-      getCurIndex() {
-        var xnm = this.curXueqi.split('-')[0];
-        var xqm = (this.curXueqi.split('-')[2] == '1') ? '3' : '12';
-        for (var i = 0; i < this.gradeData.length; i++) {
-          if (this.gradeData[i].items[0].xnm == xnm && this.gradeData[i].items[0].xqm == xqm) {
-            return i;
-          }
-        }
-      },
-      getXueqiList() {
-        var xueqiList = [];
-        for (var i = 0; i < this.gradeData.length; i++) {
-          var xnm = this.gradeData[i].items[0].xnm + '-' + (parseInt(this.gradeData[i].items[0].xnm) + 1).toString()
-          var xqm = this.gradeData[i].items[0].xqm == '3' ? '1' : '2';
-          xueqiList.push(xnm + '-' + xqm);
-        }
-        this.xueqiList = xueqiList;
-      },
-      changeXueqi(index) {
-        this.curXueqi = this.xueqiList[index];
-      },
-		}
-	}
+        });
+      });
+      this.totalCredit = this.calculateCredit(totalItems);
+      this.totalGrade = this.calculateGPA(totalItems);
+      this.yearCredit = this.calculateCredit(yearItems);
+      this.yearGrade = this.calculateGPA(yearItems);
+      this.xueqiCredit = this.calculateCredit(xueqiItems);
+      this.xueqiGrade = this.calculateGPA(xueqiItems);
+      this.totalBaiFenZhi = this.calculateBaiFenZhi(totalItems);
+      this.xueqiBaiFenZhi = this.calculateBaiFenZhi(xueqiItems);
+    },
+    calculateGPA(grades) {
+      let totalCredit = 0;
+      let totalGrade = 0;
+      grades.forEach((item) => {
+        totalCredit += parseFloat(item.xf);
+        totalGrade += parseFloat(item.xf) * parseFloat(item.jd);
+      });
+      return totalGrade / totalCredit;
+    },
+    calculateCredit(grades) {
+      let totalCredit = 0;
+      grades.forEach((item) => {
+        totalCredit += parseFloat(item.xf);
+      });
+      return totalCredit;
+    },
+    calculateBaiFenZhi(grades) {
+      let totalCredit = 0;
+      let totalGrade = 0;
+      grades.forEach((item) => {
+        totalCredit += parseFloat(item.xf);
+        totalGrade += parseFloat(item.xf) * parseFloat(item.bfzcj);
+      });
+      return totalGrade / totalCredit;
+    },
+    calculateXueqiGPA(term) {
+      return this.calculateGPA(this.getCoursesByTerm(term));
+    },
+    calculateXueqiCredit(term) {
+      return this.calculateCredit(this.getCoursesByTerm(term));
+    },
+    getCoursesByTerm(term) {
+      const xnmmc = term.substring(0, 9);
+      const xqmmc = term.substring(9, 11);
+      const xqmTable = { 秋冬: '1', 春夏: '2' };
+      return this.gradeInfo
+        .flatMap((item) => item.items || [])
+        .filter(
+          (course) =>
+            course.xnmmc === xnmmc && course.xqmmc === xqmTable[xqmmc]
+        )
+        .sort((a, b) => parseFloat(b.bfzcj) - parseFloat(a.bfzcj));
+    },
+    navigateToDetail(courseName) {
+      uni.navigateTo({
+        url: `/pages/courseDetail/courseDetail?name=${courseName}`,
+      });
+    },
+  },
+};
 </script>
 
-<style lang="scss" scoped>
-  .page-wraper {
-    width: 100%;
-    height: 95vh;
-  }
-
-  .header {
-    position: sticky;
-    top: 0;
-    height: 20vh;
-  }
-
-	.top-info {
-		background-color: #4a90e2;
-    position: sticky;
-    top: 0;
-    height: 10vh;
-	}
-
-	.info-text {
-		font-size: 18rpx;
-		color: #ffffff;
-		position: absolute;
-		top: 20rpx;
-	}
-	
-	.info-value {
-		font-size: 36rpx;
-		color: #ffffff;
-		position: absolute;
-		top: 60rpx;
-		font-weight: bold;
-	}
-	
-	.top-info-2 {
-		background-color: #ffffff;
-    position: sticky;
-    top: 0;
-    height: 10vh;
-	}
-	
-	.info-text-2 {
-		font-size: 18rpx;
-		color: #000000;
-		position: absolute;
-		top: 20rpx;
-	}
-	
-	.info-value-2 {
-		font-size: 36rpx;
-		color: #4a90e2;
-		position: absolute;
-		top: 60rpx;
-		font-weight: bold;
-	}
-
-
-  .grade {
-    position: sticky;
-    bottom: 0;
-    height: 70vh;
-
-  }
-	
-	.grade-info {
-		background-color: #ffffff;
-		height: 100rpx;
-		position: relative;
-		width: 100%;
-		top: 10rpx;
-		border-radius: 5%;
-		margin-bottom: 20rpx;
-	}
-	
-	.grade-text {
-		font-size: 18rpx;
-		color: #000000;
-		position: absolute;
-		left: 5%;
-		top: 20rpx;
-	}
-	
-	.grade-xf {
-		font-size: 18rpx;
-		color: #000000;
-		position: absolute;
-		left: 50%;
-		top: 20rpx;
-	}
-	
-	.grade-jd {
-		font-size: 18rpx;
-		color: #000000;
-		position: absolute;
-		left: 80%;
-		top: 20rpx;
-	}
-
-  .footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 5vh;
-  }
-
-  .xueqi-item {
-    width: 200rpx;
-    border-radius: 5%;
-    font-size: 24rpx;
-    height: 5vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+<style>
+.container {
+  padding: 16px;
+  background-color: #f8f8f8;
+}
+.grade-summary,
+.term-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.grade-item {
+  width: 48%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+}
+.term-item {
+  padding: 10px;
+  margin-right: 8px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+}
+.selected-term-item {
+  background-color: #E3F2FD;
+}
+.course-list {
+  margin-top: 10px;
+}
+.course-item {
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.course-header {
+  display: flex;
+  justify-content: space-between;
+}
+.progress-bar-container {
+  margin-top: 5px;
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background-color: #74c6f7;
+}
 </style>

@@ -1,0 +1,80 @@
+
+.container {
+  padding: 16px;
+  background-color: #f8f8f8;
+}
+.grade-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.grade-item {
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+.term-summary {
+  white-space: nowrap;
+  margin-bottom: 16px;
+  width: 100%;
+}
+.term-item {
+  display: inline-block;
+  padding: 10px 15px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  margin-right: 8px;
+  text-align: center;
+  width: 30vw;
+}
+.selected-term-item {
+  background-color: #E3F2FD;
+}
+.course-list {
+  margin-top: 10px;
+}
+.course-item {
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.course-header {
+  display: flex;
+  justify-content: space-between;
+}
+.progress-bar-container {
+  margin-top: 5px;
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background-color: #74c6f7;
+}
+.course-name {
+  font-size: 16px;
+  font-weight: bold;
+}
+.course-score {
+  font-size: 20px;
+  font-weight: bold;
+}
+.course-info {
+  font-size: 14px;
+  color: #666;
+}
+.grade-label {
+  font-size: 14px;
+  font-weight: bold;
+}
+.grade-value {
+  font-size: 16px;
+  font-weight: bold;
+}
+.term-label {
+  font-size: 14px;
+}
